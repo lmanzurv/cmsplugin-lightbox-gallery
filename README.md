@@ -1,0 +1,1 @@
+# cmsplugin-lightbox-gallery
