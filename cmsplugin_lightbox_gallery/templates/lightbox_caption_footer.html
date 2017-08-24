@@ -1,0 +1,16 @@
+{% load cms_tags sekizai_tags %}
+
+{% addtoblock "css" %}
+    <style>
+        .lightbox-caption-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+    </style>
+{% endaddtoblock %}
+
+{% for plugin in instance.child_plugin_instances %}
+    {% render_plugin plugin %}
+{% endfor %}

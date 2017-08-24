@@ -1,0 +1,15 @@
+{% load cms_tags sekizai_tags %}
+
+{% addtoblock "css" %}
+    <style>
+        a.lightbox-gallery {
+            cursor: pointer;
+        }
+    </style>
+{% endaddtoblock %}
+
+<a class="lightbox-gallery toggle {{ instance.button_classes }}" data-img-target="lightbox-imgs-{{ instance.gallery_id }}" style="display:none;">
+    {% if instance.icon_left %}{% include 'aldryn_bootstrap3/plugins/includes/icon.html' with icon_class=instance.icon_left %}{% endif %}
+    {{ instance.label }}
+    {% if instance.icon_right %}{% include 'aldryn_bootstrap3/plugins/includes/icon.html' with icon_class=instance.icon_right %}{% endif %}
+</a>

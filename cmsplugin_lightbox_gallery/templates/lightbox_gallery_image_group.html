@@ -1,0 +1,26 @@
+{% load thumbnail lightbox i18n %}
+
+{% for image in instance.images %}
+    {% if parent.plugin_type == 'LightboxGalleryPlugin' %}
+        <a id="lightbox-group-img-{{ instance.id }}-{{ forloop.counter }}" class="lightbox-img lightbox-loading"
+            {% if image.description or vertical_caption or overview %}data-sub-html="#lightbox-img-caption-{{ instance.id }}-{{ forloop.counter }}"{% endif %}
+            data-thumbnail="{% thumbnail image.image image.image|imagesize:thumb_options.size crop=thumb_options.crop upscale=thumb_options.upscale subject_location=image.subject_location %}"
+            data-root="{% thumbnail image.image 250x250 crop %}" data-parent-url="{{ parent.placeholder.page.get_absolute_url }}"
+            data-parent-title="{{ parent.placeholder.page.get_title_obj.title }}"
+            data-vertical-caption="{% if vertical_caption_more %}{{ vertical_caption_more }}{% else %}{% trans 'View more on' %}{% endif %}">
+        </a>
+        <div id="lightbox-img-caption-{{ instance.id }}-{{ forloop.counter }}">
+            <div class="caption-content{% if vertical_caption or overview %} vertical-caption{% endif %}">
+                <p class="lightbox-caption-text">{{ image.description }}</p>
+            </div>
+        </div>
+    {% else %}
+        <li id="lightbox-group-img-{{ instance.id }}-{{ forloop.counter }}" class="lightbox-loading"
+            data-thumbnail="{% thumbnail image.image image.image|imagesize:thumb_options.size crop=thumb_options.crop upscale=thumb_options.upscale subject_location=image.subject_location %}"
+            data-root="{% thumbnail image.image 250x250 crop %}">
+            {% if image.description %}
+                <div class="caption">{{ image.description }}</div>
+            {% endif %}
+        </li>
+    {% endif %}
+{% endfor %}

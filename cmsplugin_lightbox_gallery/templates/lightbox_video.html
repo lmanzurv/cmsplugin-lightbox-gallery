@@ -1,0 +1,97 @@
+{% load cms_tags sekizai_tags staticfiles lightbox thumbnail %}
+
+{% addtoblock "css" %}
+    <link type="text/css" rel="stylesheet" href="{% static 'lightbox_gallery/css/lightGallery.min.css' %}" />
+{% endaddtoblock %}
+{% addtoblock "css" %}
+    <style>
+        .lightbox-video-poster {
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .lightbox-video-button p {
+            margin-bottom: 0;
+        }
+    </style>
+{% endaddtoblock %}
+
+{% if instance.overlay %}
+    {% if instance.poster %}
+        <div id="lightbox-video-poster-{{ instance.id }}" class="lightbox-video-poster" data-src="
+            {% thumbnail instance.poster 1200x675 crop %}
+            ">
+    {% endif %}
+        {% if instance.button_text or instance.button_icon_left or instance.button_icon_right %}
+            <button class="lightbox-video-button{% if instance.button_classes %} {{ instance.button_classes }}{% endif %}" data-video-target="lightbox-video-{{ instance.id }}" type="button">
+                {% if instance.button_icon_left %}{% include 'aldryn_bootstrap3/plugins/includes/icon.html' with icon_class=instance.button_icon_left %}{% endif %}
+                {% if instance.button_text %}{{ instance.button_text }}{% endif %}
+                {% if instance.button_icon_right %}{% include 'aldryn_bootstrap3/plugins/includes/icon.html' with icon_class=instance.button_icon_right %}{% endif %}
+            </button>
+        {% endif %}
+    {% if instance.poster %}
+        </div>
+    {% endif %}
+    <div class="lightbox-video" style="display:none;" id="lightbox-video-{{ instance.id }}">
+        <div class="lightbox-vid" data-src="{{ instance.url }}"></div>
+    </div>
+{% else %}
+    <iframe class="lightbox-embed" width="100%" height="{% if 'youtube' in instance.url %}315{% else %}360{% endif %}" src="{{ instance.url }}" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+{% endif %}
+
+{% addtoblock "js" %}
+    <script src="{% static 'lightbox_gallery/js/lightGallery-all.min.js' %}"></script>
+{% endaddtoblock %}
+
+{% addtoblock "js" %}
+    <script type="text/javascript">
+        window.addEventListener('load', function() {
+            {% if instance.overlay %}
+                $('.lightbox-video').each(function() {
+                    var $video = $(this);
+                    $video.lightGallery({
+                        selector: '.lightbox-vid',
+                        zoom: false,
+                        fullScreen: false,
+                        vimeoPlayerParams: { autoplay: 1 },
+                        youtubePlayerParams: { autoplay: 1 }
+                    });
+
+                    $video.on('onAfterOpen.lg', function(event) {
+                        var $embedVideo = $('.lg-outer .lg-inner .lg-video-object');
+                        var url = $embedVideo.attr('src');
+                        if(url !== undefined && (url.indexOf('youtube') !== -1 || url.indexOf('vimeo') !== -1)) {
+                            url = url.replace('autoplay=0&', '');
+                            $embedVideo.attr('src', url);
+                        }
+                    });
+                });
+
+                $('.lightbox-video-button').each(function() {
+                    $(this).click(function() {
+                        $('#'+$(this).data('video-target')).find('.lightbox-vid').click();
+                    });
+                });
+            {% else %}
+                $('.lightbox-embed').each(function() {
+                    var url = $(this).attr('src');
+                    if(url.indexOf('vimeo') != -1) {
+                        url = url.replace('vimeo.com', 'player.vimeo.com/video');
+                        $(this).attr('src', url);
+                    }
+                });
+            {% endif %}
+        });
+        {% if instance.poster %}
+            window.addEventListener('load', function() {
+                $('.lightbox-video-poster').each(function() {
+                    var $wrapper = $(this);
+                    if($wrapper.attr('data-src')) {
+                        $wrapper.attr('style', 'background-image: url(' + $wrapper.data('src') + ');');
+                    }
+                });
+            });
+        {% endif %}
+    </script>
+{% endaddtoblock %}

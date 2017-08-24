@@ -1,0 +1,66 @@
+{% load sekizai_tags thumbnail %}
+
+{% addtoblock "css" %}
+    <style>
+        .lightbox-gallery-preview {
+            list-style: none;
+        }
+        .lightbox-gallery-preview li {
+            position: relative;
+        }
+        .lightbox-gallery-preview img {
+            width: 100%;
+        }
+        .lightbox-gallery-preview .lightbox-gallery-more {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            text-align: center;
+            height: 100%;
+        }
+        .lightbox-gallery-preview .lightbox-gallery {
+            cursor: pointer;
+        }
+    </style>
+{% endaddtoblock %}
+
+<ul id="ligthbox-gallery-preview-{{ instance.id }}" class="lightbox-gallery-preview" style="display:none;">
+    {% for plugin in preview_images %}
+        <li id="lightbox-preview-{{ forloop.counter }}" class="lightbox-gallery {% if forloop.last and more_images %}more-overlay{% endif%}" data-img-index="{{ forloop.counter0 }}"
+            data-img-target="lightbox-imgs-{% if instance.gallery_id %}{{ instance.gallery_id }}{% else %}{{ instance.id }}{% endif %}"
+            data-src="{% thumbnail plugin.image 560x370 crop %}">
+            <div class="lightbox-preview-overlay">
+            </div>
+            {% if forloop.last and more_images %}
+                <div class="lightbox-gallery-more">
+                    <h3>+{{ more_images }}</h3>
+                </div>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>
+
+{% addtoblock "js" %}
+    <script type="text/javascript">
+        function initPreview($images) {
+            $images.siblings('.lightbox-gallery-preview').css('display', '');
+        }
+
+        window.addEventListener('load', function() {
+            $('.lightbox-gallery-preview .lightbox-gallery').each(function() {
+                var $gallery = $(this);
+                if($gallery.attr('data-src')) {
+                    var $downloading = $('<img>');
+                    $downloading.on('load', function(){
+                        $gallery.find('.lightbox-preview-overlay').append(this);
+                    });
+                    $downloading.attr('src', $gallery.data('src'));
+                }
+                $gallery.on('click', function() {
+                    var $preview = $(this);
+                    $('#'+$preview.data('img-target')).find('.lightbox-img')[$preview.data('img-index')].click();
+                });
+            });
+        });
+    </script>
+{% endaddtoblock %}

@@ -1,0 +1,213 @@
+{% load cms_tags sekizai_tags staticfiles i18n %}
+
+{% addtoblock "css" %}
+    <link type="text/css" rel="stylesheet" href="{% static 'lightbox_gallery/css/lightGallery.min.css' %}" />
+{% endaddtoblock %}
+{% addtoblock "css" %}
+    <style>
+        .lightbox-caption-more-action {
+            padding: 0;
+            font-size: inherit;
+        }
+    </style>
+{% endaddtoblock %}
+{% if instance.rotating_images and not overview %}
+    {% addtoblock "css" %}
+        <style>
+            .jumbotron.rotating .overlay {
+                z-index: 2;
+            }
+
+            .jumbotron.rotating .container {
+                z-index: 3;
+            }
+
+            .rotating .rotating-images .rotating-img {
+                -webkit-transition: opacity 1s ease-in-out;
+                -moz-transition: opacity 1s ease-in-out;
+                transition: opacity 1s ease-in-out;
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: cover;
+                width: 100%;
+                height: 100%;
+                position: absolute;
+                z-index: 1;
+                left: 0;
+                top: 0;
+                opacity: 0;
+            }
+        </style>
+    {% endaddtoblock %}
+{% endif %}
+{% if instance.vertical_caption %}
+    {% addtoblock "css" %}
+        <style>
+            .lg-outer .lg-inner {
+                width: 70%;
+            }
+
+            .lg-outer .lg-inner.lg-full {
+                width: 100%;
+            }
+
+            .lg-toolbar .lg-toggle-caption {
+                font-family: 'FontAwesome';
+                font-size: 21px;
+                padding: 11px 0;
+            }
+
+            .lg-toolbar .lg-toggle-caption::before {
+                content: "\f05a";
+            }
+
+            .lg-actions .lg-next {
+                right: calc(30% + 20px);
+                transition: 600ms ease;
+                -webkit-transition: 600ms ease;
+            }
+
+            .lg-actions .lg-next.lg-full, .lg-thumb-outer .lg-toogle-thumb.lg-full {
+                right: 20px;
+            }
+
+            .lg-sub-html {
+                right: 0;
+                top: 0;
+                left: auto;
+                width: 30%;
+                padding: 20px 10px;
+                margin-top: 3.5em;
+                background-color: #fff;
+                color: #000;
+            }
+
+            .lg-outer.lg-pull-caption-up .lg-sub-html {
+                -webkit-transition: bottom .25s ease, right 600ms ease;
+                -o-transition: bottom .25s ease, right 600ms ease;
+                transition: bottom .25s ease, right 600ms ease;
+            }
+
+            .lg-sub-html.lg-hidden {
+                right: -30%;
+            }
+
+            .lg-sub-html.lg-empty-html {
+                display: block;
+            }
+
+            .lg-thumb-outer .lg-toogle-thumb {
+                right: calc(30% + 20px);
+                transition: 600ms ease;
+                -webkit-transition: 600ms ease;
+            }
+        </style>
+    {% endaddtoblock %}
+{% endif %}
+
+{% addtoblock "js" %}
+    <script type="text/javascript">
+        function initRotatingBanner($gallery) {
+            if($gallery.hasClass('rotating-banner')) {
+                var $jumbotron = $gallery.closest('.jumbotron.cover-image');
+                if($jumbotron.length) {
+                    // Get to know the document's focus to avoid rotating on blur
+                    var focused = document.hasFocus();
+                    $(window).focus(function() {
+                        focused = true;
+                    }).blur(function() {
+                        focused = false;
+                    });
+
+                    // Preload 3 images and then start rotating to avoid "empty" image while it downloads
+                    var $images = $gallery.find('.lightbox-img');
+                    var $preloading = $('<div class="rotating-images"></div>');
+                    $jumbotron.addClass('rotating');
+                    $jumbotron.append($preloading);
+                    // Can only preload 2 because you don't know how many images will there be in the rotating banner (has to be at least 2)
+                    for(var i = 0; i < 2; i++) {
+                        $preloading.append($('<div class="rotating-img">').css('background-image', 'url(' + $images[i].href + ')'));
+                    }
+
+                    var amount = $gallery.data('rotating');
+                    var index = 1;
+                    var $rotatingImages;
+                    // Set the interval of the rotating banner
+                    setInterval(function() {
+                        if(focused) {
+                            $rotatingImages = $preloading.find('.rotating-img');
+                            $rotatingImages.css('opacity', '0');
+                            $($rotatingImages[index]).css('opacity', '1');
+
+                            // Calculate the next index for the image to display
+                            if(index == amount - 1) {
+                                index = 0;
+                            } else {
+                                index++;
+                            }
+
+                            // If the rotating banner hasn't downloaded all the images, download the next so it is ready for the next iteration
+                            if($rotatingImages.length < amount) {
+                                $rotatingImg = $('<div class="rotating-img"></div>');
+                                $rotatingImg.css('background-image', 'url(' + $images[$rotatingImages.length].href + ')');
+                                $preloading.append($rotatingImg);
+                            }
+                        }
+                    }, 8000);
+                }
+            }
+        }
+    </script>
+{% endaddtoblock %}
+{% addtoblock "js" %}
+    <script src="{% static 'lightbox_gallery/js/lightGallery-all.min.js' %}"></script>
+{% endaddtoblock %}
+{% addtoblock "js" %}
+    <script type="text/javascript">
+        function initGallery(gallery) {
+            gallery.lightGallery({
+                selector: '.lightbox-img',
+                download: false,
+                thumbnail: true,
+                autoplay: false,
+                fullScreen: false,
+                zoom: false,
+                counter: false,
+                html: true
+            });
+
+            if(gallery.hasClass('vertical-caption-gallery')) {
+                gallery.on('onAfterOpen.lg', function(event) {
+                    $('<span class="lg-toggle-caption lg-icon"></span>').appendTo($('.lg-outer .lg-toolbar'));
+                    $('.lg-outer .lg-toolbar .lg-toggle-caption').click(function() {
+                        $('.lg-outer .lg-sub-html').toggleClass('lg-hidden');
+                        $('.lg-outer .lg-inner').toggleClass('lg-full');
+                        $('.lg-actions .lg-next').toggleClass('lg-full');
+                        $('.lg-thumb-outer .lg-toogle-thumb').toggleClass('lg-full');
+                    });
+                });
+            }
+            initRotatingBanner(gallery);
+        }
+    </script>
+{% endaddtoblock %}
+
+{% with instance.placeholder.page as page %}
+    <div class="lightbox-images {% if instance.rotating_images and not overview %} rotating-banner{% endif %}{% if instance.vertical_caption %}vertical-caption-gallery{% endif %}"
+        data-parent-title="{{ page.get_title_obj.title }}" data-parent-url="{{ page.get_absolute_url }}"
+        data-vertical-caption="{% if instance.vertical_caption_more %}{{ instance.vertical_caption_more }}{% else %}{% trans 'View more on' %}{% endif %}"
+        id="lightbox-imgs-{% if instance.gallery_id %}{{ instance.gallery_id }}{% else %}{{ instance.id }}{% endif %}"
+        {% if instance.rotating_images and not overview %}data-rotating="{{ instance.rotating_images }}"{% endif %} style="display:none;">
+        {% with instance.vertical_caption as vertical_caption %}
+            {% for plugin in images %}
+                {% render_plugin plugin %}
+            {% endfor %}
+        {% endwith %}
+    </div>
+    {% if instance.vertical_caption or request.toolbar.edit_mode or overview %}
+        <div data-gallery="lightbox-imgs-{% if instance.gallery_id %}{{ instance.gallery_id }}{% else %}{{ instance.id }}{% endif %}" class="lightbox-caption" style="display: none;">
+            <div class="lightbox-caption-header">{% render_plugin instance.caption_header %}</div>
+            <div class="lightbox-caption-footer">{% render_plugin instance.caption_footer %}</div>
+        </div>
+    {% endif %}
+{% endwith %}

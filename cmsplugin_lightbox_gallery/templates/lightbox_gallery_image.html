@@ -1,0 +1,102 @@
+{% load thumbnail lightbox sekizai_tags %}
+
+{% if parent == 'LightboxGalleryPlugin' %}
+    <a id="lightbox-img-{{ instance.id }}" class="lightbox-img lightbox-loading"
+        {% if instance.description or vertical_caption or overview %}data-sub-html="#lightbox-img-caption-{{ instance.id }}"{% endif %}
+        data-thumbnail="{% thumbnail instance.image opts.size crop=opts.crop upscale=opts.upscale subject_location=opts.subject_location %}"
+        data-root="{% thumbnail instance.image 250x250 crop %}">
+    </a>
+    <div id="lightbox-img-caption-{{ instance.id }}">
+        <div class="caption-content{% if vertical_caption or overview %} vertical-caption{% endif %}">
+            {{ instance.description|safe }}
+        </div>
+    </div>
+{% else %}
+    <li id="lightbox-img-{{ instance.id }}" class="lightbox-loading"
+        data-thumbnail="{% thumbnail instance.image opts.size crop=opts.crop upscale=opts.upscale subject_location=opts.subject_location %}"
+        data-root="{% thumbnail instance.image 250x250 crop %}">
+        {% if instance.description %}
+            <div class="caption">{{ instance.description }}</div>
+        {% endif %}
+    </li>
+{% endif %}
+
+{% addtoblock "js" %}
+    <script type="text/javascript">
+        window.addEventListener('load', function() {
+            $('.lightbox-loading').each(function() {
+                var $image = $(this);
+                if($image.hasClass('lightbox-img')) {
+                    if($image.attr('data-thumbnail')) {
+                        $image.attr('href', $image.data('thumbnail'));
+                    }
+                } else {
+                    if($image.attr('data-root')) {
+                        $image.attr('data-thumb', $image.data('root'));
+                    }
+                }
+
+                var $downloading = $('<img>');
+                $downloading.on('load', function(){
+                    $image.append($downloading);
+                    $image.removeClass('lightbox-loading');
+                    if($image.siblings('.lightbox-loading').length === 0) {
+                        var $lgImages = $image.closest('.lightbox-images');
+                        if($lgImages.length > 0) {
+                            initGallery($lgImages);
+                            if($image.closest('.lightbox-galleries').length === 0) {
+                                initToggle($lgImages);
+                                if (typeof initPreview !== 'undefined' && $.isFunction(initPreview)) {
+                                    initPreview($lgImages);
+                                }
+                            }
+                        }
+                        else if($image.closest('.lightbox-slider').length > 0) {
+                            initSlider($image.closest('.lightbox-slider'));
+                        }
+                    }
+                });
+
+                if($image.hasClass('lightbox-img')) {
+                    $downloading.attr('src', $image.data('root'));
+                    // Load the gallery caption header and Footer
+                    var $imageCaption = $($image.data('sub-html')).find('.caption-content');
+                    if($imageCaption.hasClass('vertical-caption')) {
+                        var $parent = $image.closest('.lightbox-images');
+                        var parentId = $parent.attr('id');
+                        var $caption = $('.lightbox-caption[data-gallery=' + parentId + ']');
+
+                        // Wrap the contents of the caption in a div
+                        $imageCaption.html($('<div class="lightbox-caption-text"></div>').html($imageCaption.html()));
+
+                        var $captionHeader = $caption.find('.lightbox-caption-header');
+                        if($captionHeader.length > 0) {
+                            var $header = $('<h2 class="lightbox-caption-header"></h2>');
+                            $header.append($captionHeader.clone());
+                            $imageCaption.prepend($header);
+                        }
+
+                        var $divider = $('<hr class="lightbox-caption-divider">');
+                        $imageCaption.append($divider);
+
+                        var $captionMore = $('<p class="lightbox-caption-more"></p>');
+                        var $moreSpan = $('<span>' + $parent.data('vertical-caption') + ' </span>');
+                        $captionMore.append($moreSpan);
+                        var $moreLink = $('<a class="btn btn-link lightbox-caption-more-action" href="' + $parent.data('parent-url') + '">' + $parent.data('parent-title') + '</a>');
+                        $captionMore.append($moreLink);
+                        $imageCaption.append($captionMore);
+
+                        var $captionFooter = $caption.find('.lightbox-caption-footer');
+                        if($captionFooter.length > 0) {
+                            $imageCaption.append($captionFooter.clone());
+                        }
+                    }
+                } else {
+                    if($image.attr('data-thumbnail')) {
+                        $downloading.attr('src', $image.data('thumbnail'));
+                    }
+                }
+            });
+        });
+    </script>
+{% endaddtoblock %}

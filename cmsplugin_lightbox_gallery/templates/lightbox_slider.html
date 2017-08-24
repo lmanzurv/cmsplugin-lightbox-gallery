@@ -1,0 +1,59 @@
+{% load cms_tags sekizai_tags staticfiles %}
+
+{% addtoblock "css" %}
+    <link type="text/css" rel="stylesheet" href="{% static 'lightbox_gallery/css/lightSlider.min.css' %}" />
+{% endaddtoblock %}
+{% addtoblock "css" %}
+    <style>
+        .lightbox-slider.hidden {
+            height: 1px;
+            opacity: 0;
+            filter: alpha(opacity=0);
+            overflow: hidden;
+        }
+        .lightbox-slider li img {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+{% endaddtoblock %}
+
+{% addtoblock "js" %}
+    <script src="{% static 'lightbox_gallery/js/lightSlider.min.js' %}"></script>
+{% endaddtoblock %}
+{% addtoblock "js" %}
+    <script type="text/javascript">
+        function initSlider($slider) {
+            var parent = $slider.closest('.modal');
+
+            var loop = parent.length > 0 ? false : true;
+            var autoplay = parent.length > 0 ? false : {{ instance.autoplay|yesno:'true,false' }};
+
+            var lightSlider = $slider.lightSlider({
+                gallery: true,
+                item: 1,
+                loop: loop,
+                adaptiveHeight: {{ instance.adaptive_height|yesno:'true,false' }},
+                vertical: {{ instance.is_vertical|yesno:'true,false' }},
+                slideMargin: 0,
+                enableDrag: false,
+                enableTouch: false,
+                auto: autoplay,
+                pauseOnHover: {{ instance.pause_hover|yesno:'true,false' }}
+            });
+            $slider.css('display', '');
+
+            if(parent.length > 0) {
+                parent.on('shown.bs.modal', function (event) {
+                    lightSlider.refresh();
+                });
+            }
+        }
+    </script>
+{% endaddtoblock %}
+
+<ul class="lightbox-slider" id="lightbox-slider-{{ instance.id }}" style="display: none;">
+    {% for plugin in instance.child_plugin_instances %}
+        {% render_plugin plugin %}
+    {% endfor %}
+</ul>

@@ -1,0 +1,34 @@
+{% load cms_tags sekizai_tags lightbox %}
+
+{% addtoblock "css" %}
+    <style>
+        .lightbox-gallery p {
+            margin-bottom: 0;
+        }
+    </style>
+{% endaddtoblock %}
+
+{% addtoblock "js" %}
+    <script type="text/javascript">
+        function initToggle($images) {
+            var $toggle = $('.lightbox-gallery.toggle[data-img-target=' + $images.attr('id') + ']');
+            $toggle.css('display', '');
+            $toggle.click(function() {
+                $('#' + $(this).data('img-target')).find('.lightbox-img')[0].click();
+            });
+        }
+    </script>
+{% endaddtoblock %}
+
+{% if instance.has_preview and not overview %}
+    {% include 'includes/lightbox_gallery_preview.html' %}
+{% else %}
+    {% if not overview and instance.button_text %}
+        <button class="lightbox-gallery toggle {{ instance.button_classes }}" type="button" data-img-target="lightbox-imgs-{% if instance.gallery_id %}{{ instance.gallery_id }}{% else %}{{ instance.id }}{% endif %}" style="display:none;">
+            {% if instance.button_icon_left %}{% include 'aldryn_bootstrap3/plugins/includes/icon.html' with icon_class=instance.button_icon_left %}{% endif %}
+            {{ instance.button_text }}
+            {% if instance.button_icon_right %}{% include 'aldryn_bootstrap3/plugins/includes/icon.html' with icon_class=instance.button_icon_right %}{% endif %}
+        </button>
+    {% endif %}
+{% endif %}
+{% include 'includes/lightbox_gallery_images.html' %}

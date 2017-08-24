@@ -1,0 +1,95 @@
+{% load cms_tags i18n sekizai_tags thumbnail %}
+
+{% addtoblock "css" %}
+    <style>
+        .lightbox-gallery-overview {
+            list-style: none;
+        }
+        .lightbox-gallery-overview li {
+            display: inline-block;
+            width: 33.3333%;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .lightbox-gallery-overview li img {
+            width: 100%;
+        }
+    </style>
+{% endaddtoblock %}
+{% addtoblock "js" %}
+    <script type="text/javascript">
+        function initOverview() {
+            $('.lightbox-gallery-embedded').bind('click', function(e) {
+                e.preventDefault();
+                var $gallery = $($(this).attr('href'));
+                if($gallery.find('.lightbox-img').length) {
+                    $gallery.find('.lightbox-img')[0].click();
+                }
+            });
+        }
+    </script>
+{% endaddtoblock %}
+{% addtoblock "js" %}
+    <script type="text/javascript">
+        function selectGallery() {
+            var results = new RegExp('[\?&]gallery=([^&#]*)').exec(window.location.href);
+            if(results !== null) {
+                gallery = results[1];
+                $('.lightbox-gallery-embedded[data-gallery="' + gallery + '"]').click();
+            }
+        }
+
+        $(document).ready(function() {
+            $('.lightbox-gallery-embedded').each(function() {
+                var $embed = $(this);
+                if($embed.attr('data-cover')) {
+                    var $downloading = $('<img>');
+                    $downloading.on('load', function(){
+                        $embed.prepend(this);
+                    });
+                    $downloading.attr('src', $embed.data('cover'));
+                }
+            });
+
+            initOverview();
+
+            $('.lightbox-galleries').each(function() {
+                var $embedded = $(this);
+                var selectInterval = setInterval(function() {
+                    if($embedded.find('.lightbox-loading').length === 0) {
+                        clearInterval(selectInterval);
+                        // Try to trigger the gallery for all overviews (will pop-up the correct one as it becomes available)
+                        selectGallery();
+                    }
+                }, 100);
+            });
+        });
+    </script>
+{% endaddtoblock %}
+
+<ul class="lightbox-gallery-overview">
+    {% for gallery in galleries %}
+        <li>
+            <a id="lightbox-gallery-embedded-{{ gallery.id }}"
+                {% if instance.embed_galleries %}class="lightbox-gallery-embedded" href="#lightbox-imgs-{% if gallery.gallery_id %}{{ gallery.gallery_id }}{% else %}{{ gallery.id }}{% endif %}"
+                {% else %}href="{{ gallery.page.get_absolute_url }}"{% endif %}
+                {% if gallery.gallery_id %} data-gallery="{{ gallery.gallery_id }}"{% endif %}
+                {% if gallery.cover_image %}data-cover="{% thumbnail gallery.cover_image 320x220 crop %}"{% endif %}>
+                <div class="lightbox-overview-info">
+                    {% with gallery.number_images as images %}
+                        <p>{{ gallery.gallery.name }} <span class="lightbox-overview-photos">({{ images }} {% if images > 1 %}{% trans 'photos' %}{% else %}{% trans 'photo' %}{% endif %})</span></p>
+                    {% endwith %}
+                </div>
+            </a>
+        </li>
+    {% endfor %}
+</ul>
+{% if instance.embed_galleries %}
+    {% with True as overview %}
+    <div class="lightbox-galleries" id="lightbox-galleries-{{ instance.id }}">
+        {% for gallery in galleries %}
+            {% render_plugin gallery.gallery %}
+        {% endfor %}
+    </div>
+    {% endwith %}
+{% endif %}
